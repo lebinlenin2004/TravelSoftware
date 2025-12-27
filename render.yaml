@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: travelsoftware
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn TravelSoftware.wsgi:application
