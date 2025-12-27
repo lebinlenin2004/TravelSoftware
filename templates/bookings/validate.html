@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}Validate Booking - Travel Sales Management{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4 class="mb-0">Booking Information</h4>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <th width="150">Booking #:</th>
+                        <td><strong>{{ booking.booking_number }}</strong></td>
+                    </tr>
+                    <tr>
+                        <th>Customer:</th>
+                        <td>{{ booking.customer_name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Package:</th>
+                        <td>{{ booking.package.name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Total Amount:</th>
+                        <td><strong>₹{{ booking.total_amount|floatformat:2 }}</strong></td>
+                    </tr>
+                    {% if booking.price_mismatch_flag or booking.excess_discount_flag or booking.duplicate_booking_flag %}
+                    <tr>
+                        <th>Flags:</th>
+                        <td>
+                            {% if booking.price_mismatch_flag %}
+                                <span class="badge bg-danger">Price Mismatch</span>
+                            {% endif %}
+                            {% if booking.excess_discount_flag %}
+                                <span class="badge bg-warning">Excess Discount</span>
+                            {% endif %}
+                            {% if booking.duplicate_booking_flag %}
+                                <span class="badge bg-info">Duplicate</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">Validation</h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Action *</label>
+                        <div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="action" id="approve" value="approve" checked>
+                                <label class="form-check-label" for="approve">
+                                    <i class="bi bi-check-circle text-success"></i> Approve
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="action" id="reject" value="reject">
+                                <label class="form-check-label" for="reject">
+                                    <i class="bi bi-x-circle text-danger"></i> Reject
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Validation Notes</label>
+                        {{ form.validation_notes }}
+                        {% if form.validation_notes.errors %}
+                            <div class="text-danger small">{{ form.validation_notes.errors }}</div>
+                        {% endif %}
+                        <small class="text-muted">Required for rejection, optional for approval</small>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'bookings:detail' booking.pk %}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Submit Validation</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

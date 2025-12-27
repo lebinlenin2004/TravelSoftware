@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Travel Sales Management{% endblock %}
+
+{% block content %}
+<h2 class="mb-4"><i class="bi bi-speedometer2"></i> Dashboard</h2>
+
+<div class="row">
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <h5 class="card-title">Total Sales</h5>
+                <h2>{{ total_sales }}</h2>
+                <small>Last 30 days</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card success">
+            <div class="card-body">
+                <h5 class="card-title">Total Revenue</h5>
+                <h2>₹{{ total_revenue|floatformat:2 }}</h2>
+                <small>Last 30 days</small>
+            </div>
+        </div>
+    </div>
+    {% if user.can_validate_booking %}
+    <div class="col-md-3">
+        <div class="card stat-card warning">
+            <div class="card-body">
+                <h5 class="card-title">Pending Validations</h5>
+                <h2>{{ pending_validations }}</h2>
+                <small><a href="{% url 'bookings:pending' %}" class="text-white">View all</a></small>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    <div class="col-md-3">
+        <div class="card stat-card info">
+            <div class="card-body">
+                <h5 class="card-title">Active Packages</h5>
+                <h2>{{ top_packages|length }}</h2>
+                <small>Available packages</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Monthly Sales Trend</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="salesChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Top Packages</h5>
+            </div>
+            <div class="card-body">
+                {% for package in top_packages %}
+                <div class="d-flex justify-content-between mb-2">
+                    <span>{{ package.name }}</span>
+                    <strong>{{ package.booking_count }} bookings</strong>
+                </div>
+                {% empty %}
+                <p class="text-muted">No bookings yet</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if agent_performance %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Agent Performance</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Agent</th>
+                                <th>Total Bookings</th>
+                                <th>Total Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for agent in agent_performance %}
+                            <tr>
+                                <td>{{ agent.get_full_name|default:agent.username }}</td>
+                                <td>{{ agent.total_bookings }}</td>
+                                <td>₹{{ agent.total_revenue|default:0|floatformat:2 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Recent Bookings</h5>
+                <a href="{% url 'bookings:list' %}" class="btn btn-sm btn-primary">View All</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Booking #</th>
+                                <th>Customer</th>
+                                <th>Package</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for booking in recent_bookings %}
+                            <tr>
+                                <td><a href="{% url 'bookings:detail' booking.pk %}">{{ booking.booking_number }}</a></td>
+                                <td>{{ booking.customer_name }}</td>
+                                <td>{{ booking.package.name }}</td>
+                                <td>₹{{ booking.total_amount|floatformat:2 }}</td>
+                                <td>
+                                    <span class="badge bg-{% if booking.status == 'approved' %}success{% elif booking.status == 'rejected' %}danger{% else %}warning{% endif %}">
+                                        {{ booking.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>{{ booking.created_at|date:"M d, Y" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">No bookings found</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Monthly Sales Chart
+    const ctx = document.getElementById('salesChart');
+    if (ctx) {
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [{% for month in monthly_sales %}'{{ month.month }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+                datasets: [{
+                    label: 'Revenue (₹)',
+                    data: [{% for month in monthly_sales %}{{ month.revenue }}{% if not forloop.last %},{% endif %}{% endfor %}],
+                    borderColor: 'rgb(102, 126, 234)',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}
+

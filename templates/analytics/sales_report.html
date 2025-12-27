@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+
+{% block title %}Sales Report - Travel Sales Management{% endblock %}
+
+{% block content %}
+<h2 class="mb-4"><i class="bi bi-graph-up"></i> Sales Report</h2>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Start Date</label>
+                <input type="date" name="start_date" class="form-control" value="{{ start_date|date:'Y-m-d' }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">End Date</label>
+                <input type="date" name="end_date" class="form-control" value="{{ end_date|date:'Y-m-d' }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Package</label>
+                <select name="package" class="form-select">
+                    <option value="">All Packages</option>
+                    {% for pkg in packages %}
+                    <option value="{{ pkg.pk }}" {% if package_id == pkg.pk|stringformat:"s" %}selected{% endif %}>{{ pkg.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Destination</label>
+                <input type="text" name="destination" class="form-control" value="{{ destination }}" placeholder="Filter by destination">
+            </div>
+            <div class="col-md-12">
+                <button type="submit" class="btn btn-primary">Apply Filters</button>
+                <a href="{% url 'analytics:sales_report' %}" class="btn btn-secondary">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <h5>Total Bookings</h5>
+                <h2>{{ total_bookings }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card success">
+            <div class="card-body">
+                <h5>Total Revenue</h5>
+                <h2>₹{{ total_revenue|floatformat:2 }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card info">
+            <div class="card-body">
+                <h5>Total Tax (GST)</h5>
+                <h2>₹{{ total_tax|floatformat:2 }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card warning">
+            <div class="card-body">
+                <h5>Total Commission</h5>
+                <h2>₹{{ total_commission|floatformat:2 }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Sales by Package</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Package</th>
+                                <th>Count</th>
+                                <th>Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in sales_by_package %}
+                            <tr>
+                                <td>{{ item.package__name }}</td>
+                                <td>{{ item.count }}</td>
+                                <td>₹{{ item.revenue|floatformat:2 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Sales by Destination</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Destination</th>
+                                <th>Count</th>
+                                <th>Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in sales_by_destination %}
+                            <tr>
+                                <td>{{ item.package__destination }}</td>
+                                <td>{{ item.count }}</td>
+                                <td>₹{{ item.revenue|floatformat:2 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0">Booking Details</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Booking #</th>
+                        <th>Customer</th>
+                        <th>Package</th>
+                        <th>Date</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in bookings %}
+                    <tr>
+                        <td><a href="{% url 'bookings:detail' booking.pk %}">{{ booking.booking_number }}</a></td>
+                        <td>{{ booking.customer_name }}</td>
+                        <td>{{ booking.package.name }}</td>
+                        <td>{{ booking.created_at|date:"M d, Y" }}</td>
+                        <td>₹{{ booking.total_amount|floatformat:2 }}</td>
+                        <td>
+                            <span class="badge bg-{% if booking.status == 'approved' %}success{% elif booking.status == 'rejected' %}danger{% else %}warning{% endif %}">
+                                {{ booking.get_status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

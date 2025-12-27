@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}Financial Report - Travel Sales Management{% endblock %}
+
+{% block content %}
+<h2 class="mb-4"><i class="bi bi-cash-stack"></i> Financial & GST Report</h2>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Start Date</label>
+                <input type="date" name="start_date" class="form-control" value="{{ start_date|date:'Y-m-d' }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">End Date</label>
+                <input type="date" name="end_date" class="form-control" value="{{ end_date|date:'Y-m-d' }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">&nbsp;</label>
+                <div>
+                    <button type="submit" class="btn btn-primary">Apply Filters</button>
+                    <a href="{% url 'analytics:financial_report' %}" class="btn btn-secondary">Reset</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <h5>Total Revenue</h5>
+                <h2>₹{{ total_revenue|floatformat:2 }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card success">
+            <div class="card-body">
+                <h5>Subtotal</h5>
+                <h2>₹{{ total_subtotal|floatformat:2 }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card info">
+            <div class="card-body">
+                <h5>Total GST</h5>
+                <h2>₹{{ total_tax|floatformat:2 }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card warning">
+            <div class="card-body">
+                <h5>Total Commission</h5>
+                <h2>₹{{ total_commission|floatformat:2 }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">GST Breakdown by Rate</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>GST Rate (%)</th>
+                        <th>Number of Bookings</th>
+                        <th>Subtotal</th>
+                        <th>GST Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in gst_breakdown %}
+                    <tr>
+                        <td>{{ item.package__tax_percentage }}%</td>
+                        <td>{{ item.count }}</td>
+                        <td>₹{{ item.subtotal|floatformat:2 }}</td>
+                        <td>₹{{ item.tax_amount|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Payment Summary</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>Total Paid:</strong> ₹{{ total_paid|floatformat:2 }}</p>
+                <p><strong>Pending Payments:</strong> ₹{{ pending_payments|floatformat:2 }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

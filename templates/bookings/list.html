@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}Bookings - Travel Sales Management{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-calendar-check"></i> Bookings</h2>
+    {% if user.can_create_booking %}
+    <a href="{% url 'bookings:create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Create Booking
+    </a>
+    {% endif %}
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="get" class="row g-3 mb-3">
+            <div class="col-md-4">
+                <input type="text" name="search" class="form-control" placeholder="Search bookings..." value="{{ search }}">
+            </div>
+            <div class="col-md-3">
+                <select name="status" class="form-select">
+                    <option value="">All Status</option>
+                    <option value="pending" {% if status == 'pending' %}selected{% endif %}>Pending</option>
+                    <option value="approved" {% if status == 'approved' %}selected{% endif %}>Approved</option>
+                    <option value="rejected" {% if status == 'rejected' %}selected{% endif %}>Rejected</option>
+                </select>
+            </div>
+            {% if user.can_validate_booking %}
+            <div class="col-md-2">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="flagged" value="true" id="flagged" {% if flagged == 'true' %}checked{% endif %}">
+                    <label class="form-check-label" for="flagged">Flagged Only</label>
+                </div>
+            </div>
+            {% endif %}
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-primary w-100">Filter</button>
+            </div>
+        </form>
+        
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Booking #</th>
+                        <th>Customer</th>
+                        <th>Package</th>
+                        <th>Travel Date</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Flags</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in page_obj %}
+                    <tr>
+                        <td><strong>{{ booking.booking_number }}</strong></td>
+                        <td>{{ booking.customer_name }}</td>
+                        <td>{{ booking.package.name }}</td>
+                        <td>{{ booking.travel_date|date:"M d, Y" }}</td>
+                        <td>₹{{ booking.total_amount|floatformat:2 }}</td>
+                        <td>
+                            <span class="badge bg-{% if booking.status == 'approved' %}success{% elif booking.status == 'rejected' %}danger{% else %}warning{% endif %}">
+                                {{ booking.get_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if booking.price_mismatch_flag %}
+                                <span class="badge bg-danger" title="Price Mismatch">P</span>
+                            {% endif %}
+                            {% if booking.excess_discount_flag %}
+                                <span class="badge bg-warning" title="Excess Discount">D</span>
+                            {% endif %}
+                            {% if booking.duplicate_booking_flag %}
+                                <span class="badge bg-info" title="Duplicate Booking">Dup</span>
+                            {% endif %}
+                            {% if not booking.price_mismatch_flag and not booking.excess_discount_flag and not booking.duplicate_booking_flag %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'bookings:detail' booking.pk %}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i> View
+                            </a>
+                            {% if user.can_validate_booking and booking.status == 'pending' %}
+                            <a href="{% url 'bookings:validate' booking.pk %}" class="btn btn-sm btn-outline-success">
+                                <i class="bi bi-check-circle"></i> Validate
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center text-muted">No bookings found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if page_obj.has_other_pages %}
+        <nav>
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+                {% endif %}
+                <li class="page-item active"><span class="page-link">{{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
+                {% if page_obj.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

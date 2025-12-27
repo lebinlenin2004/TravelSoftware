@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Booking - Travel Sales Management{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">Create New Booking</h4>
+            </div>
+            <div class="card-body">
+                <form method="post" id="bookingForm">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Package *</label>
+                            {{ form.package }}
+                            {% if form.package.errors %}
+                                <div class="invalid-feedback d-block">{{ form.package.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Number of Travelers *</label>
+                            {{ form.number_of_travelers }}
+                            {% if form.number_of_travelers.errors %}
+                                <div class="invalid-feedback d-block">{{ form.number_of_travelers.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Package Price (₹) *</label>
+                            {{ form.package_price }}
+                            {% if form.package_price.errors %}
+                                <div class="invalid-feedback d-block">{{ form.package_price.errors }}</div>
+                            {% endif %}
+                            <small class="text-muted">Auto-calculated based on package and travelers</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Discount Percentage (%)</label>
+                            {{ form.discount_percentage }}
+                            {% if form.discount_percentage.errors %}
+                                <div class="invalid-feedback d-block">{{ form.discount_percentage.errors }}</div>
+                            {% endif %}
+                            <small class="text-muted" id="maxDiscount">Max: 0%</small>
+                        </div>
+                        <div class="col-md-12">
+                            <hr>
+                            <h5>Customer Details</h5>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Customer Name *</label>
+                            {{ form.customer_name }}
+                            {% if form.customer_name.errors %}
+                                <div class="invalid-feedback d-block">{{ form.customer_name.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Customer Email *</label>
+                            {{ form.customer_email }}
+                            {% if form.customer_email.errors %}
+                                <div class="invalid-feedback d-block">{{ form.customer_email.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Customer Phone *</label>
+                            {{ form.customer_phone }}
+                            {% if form.customer_phone.errors %}
+                                <div class="invalid-feedback d-block">{{ form.customer_phone.errors }}</div>
+                            {% endif %}
+                            <small class="text-muted">Enter 10 digit phone number</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Travel Date *</label>
+                            {{ form.travel_date }}
+                            {% if form.travel_date.errors %}
+                                <div class="invalid-feedback d-block">{{ form.travel_date.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Customer Address</label>
+                            {{ form.customer_address }}
+                            {% if form.customer_address.errors %}
+                                <div class="invalid-feedback d-block">{{ form.customer_address.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-12">
+                            <hr>
+                            <h5>Price Summary</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <table class="table table-sm">
+                                        <tr>
+                                            <th>Package Price:</th>
+                                            <td id="displayPackagePrice">₹0.00</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Discount:</th>
+                                            <td id="displayDiscount">₹0.00</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Subtotal:</th>
+                                            <td id="displaySubtotal">₹0.00</td>
+                                        </tr>
+                                        <tr>
+                                            <th>GST:</th>
+                                            <td id="displayTax">₹0.00</td>
+                                        </tr>
+                                        <tr class="table-primary">
+                                            <th><strong>Total:</strong></th>
+                                            <td><strong id="displayTotal">₹0.00</strong></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'bookings:list' %}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Create Booking</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const packageSelect = document.getElementById('id_package');
+    const travelersInput = document.getElementById('id_number_of_travelers');
+    const priceInput = document.getElementById('id_package_price');
+    const discountInput = document.getElementById('id_discount_percentage');
+    const maxDiscountSpan = document.getElementById('maxDiscount');
+    
+    let packageData = {};
+    
+    // Fetch package data
+    function loadPackageData() {
+        const packageId = packageSelect.value;
+        if (packageId) {
+            fetch(`/api/package/${packageId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    packageData = data;
+                    calculatePrice();
+                    maxDiscountSpan.textContent = `Max: ${data.max_discount_percentage}%`;
+                    discountInput.setAttribute('max', data.max_discount_percentage);
+                })
+                .catch(() => {
+                    // Fallback: use form data if API not available
+                    console.log('API not available, using form defaults');
+                });
+        }
+    }
+    
+    function calculatePrice() {
+        if (!packageData.current_price) return;
+        
+        const travelers = parseInt(travelersInput.value) || 1;
+        const packagePrice = parseFloat(packageData.current_price) * travelers;
+        const discountPercent = parseFloat(discountInput.value) || 0;
+        const discountAmount = packagePrice * (discountPercent / 100);
+        const subtotal = packagePrice - discountAmount;
+        const taxPercent = parseFloat(packageData.tax_percentage) || 0;
+        const taxAmount = subtotal * (taxPercent / 100);
+        const total = subtotal + taxAmount;
+        
+        priceInput.value = packagePrice.toFixed(2);
+        document.getElementById('displayPackagePrice').textContent = `₹${packagePrice.toFixed(2)}`;
+        document.getElementById('displayDiscount').textContent = `-₹${discountAmount.toFixed(2)}`;
+        document.getElementById('displaySubtotal').textContent = `₹${subtotal.toFixed(2)}`;
+        document.getElementById('displayTax').textContent = `₹${taxAmount.toFixed(2)}`;
+        document.getElementById('displayTotal').textContent = `₹${total.toFixed(2)}`;
+    }
+    
+    packageSelect.addEventListener('change', loadPackageData);
+    travelersInput.addEventListener('input', calculatePrice);
+    discountInput.addEventListener('input', calculatePrice);
+    
+    // Initial load
+    if (packageSelect.value) {
+        loadPackageData();
+    }
+</script>
+{% endblock %}
+

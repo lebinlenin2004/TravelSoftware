@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - Travel Sales Management{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">Booking Information</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <th width="150">Booking #:</th>
+                        <td><strong>{% if booking %}{{ booking.booking_number }}{% else %}{{ payment.booking.booking_number }}{% endif %}</strong></td>
+                    </tr>
+                    <tr>
+                        <th>Customer:</th>
+                        <td>{% if booking %}{{ booking.customer_name }}{% else %}{{ payment.booking.customer_name }}{% endif %}</td>
+                    </tr>
+                    <tr>
+                        <th>Total Amount:</th>
+                        <td><strong>₹{% if booking %}{{ booking.total_amount|floatformat:2 }}{% else %}{{ payment.total_amount|floatformat:2 }}{% endif %}</strong></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">{{ title }}</h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Payment Method</label>
+                        {{ form.payment_method }}
+                        {% if form.payment_method.errors %}
+                            <div class="invalid-feedback d-block">{{ form.payment_method.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Transaction ID</label>
+                        {{ form.transaction_id }}
+                        {% if form.transaction_id.errors %}
+                            <div class="invalid-feedback d-block">{{ form.transaction_id.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Amount Paid (₹) *</label>
+                        {{ form.amount_paid }}
+                        {% if form.amount_paid.errors %}
+                            <div class="invalid-feedback d-block">{{ form.amount_paid.errors }}</div>
+                        {% endif %}
+                        <small class="text-muted">Total amount: ₹{% if booking %}{{ booking.total_amount|floatformat:2 }}{% else %}{{ payment.total_amount|floatformat:2 }}{% endif %}</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Payment Date</label>
+                        {{ form.payment_date }}
+                        {% if form.payment_date.errors %}
+                            <div class="invalid-feedback d-block">{{ form.payment_date.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        {{ form.notes }}
+                        {% if form.notes.errors %}
+                            <div class="invalid-feedback d-block">{{ form.notes.errors }}</div>
+                        {% endif %}
+                    </div>
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+                    <div class="d-flex justify-content-between">
+                        {% if booking %}
+                        <a href="{% url 'bookings:detail' booking.pk %}" class="btn btn-secondary">Cancel</a>
+                        {% else %}
+                        <a href="{% url 'payments:detail' payment.pk %}" class="btn btn-secondary">Cancel</a>
+                        {% endif %}
+                        <button type="submit" class="btn btn-primary">Save Payment</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

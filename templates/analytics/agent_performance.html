@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block title %}Agent Performance - Travel Sales Management{% endblock %}
+
+{% block content %}
+<h2 class="mb-4"><i class="bi bi-people"></i> Agent Performance Report</h2>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Start Date</label>
+                <input type="date" name="start_date" class="form-control" value="{{ start_date|date:'Y-m-d' }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">End Date</label>
+                <input type="date" name="end_date" class="form-control" value="{{ end_date|date:'Y-m-d' }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">&nbsp;</label>
+                <div>
+                    <button type="submit" class="btn btn-primary">Apply Filters</button>
+                    <a href="{% url 'analytics:agent_performance' %}" class="btn btn-secondary">Reset</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Agent Statistics</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Agent</th>
+                        <th>Total Bookings</th>
+                        <th>Approved</th>
+                        <th>Rejected</th>
+                        <th>Total Revenue</th>
+                        <th>Avg Booking Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for agent in agents %}
+                    <tr>
+                        <td><strong>{{ agent.get_full_name|default:agent.username }}</strong></td>
+                        <td>{{ agent.total_bookings|default:0 }}</td>
+                        <td>{{ agent.approved_bookings|default:0 }}</td>
+                        <td>{{ agent.rejected_bookings|default:0 }}</td>
+                        <td>₹{{ agent.total_revenue|default:0|floatformat:2 }}</td>
+                        <td>₹{{ agent.avg_booking_value|default:0|floatformat:2 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">No data available</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

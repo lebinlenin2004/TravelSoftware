@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block title %}Pending Validations - Travel Sales Management{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-check-circle"></i> Pending Validations</h2>
+    <form method="get" class="d-inline">
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" name="flagged" value="true" id="flagged" {% if flagged == 'true' %}checked{% endif %} onchange="this.form.submit()">
+            <label class="form-check-label" for="flagged">Show Flagged Only</label>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Booking #</th>
+                        <th>Customer</th>
+                        <th>Package</th>
+                        <th>Amount</th>
+                        <th>Flags</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in page_obj %}
+                    <tr>
+                        <td><strong>{{ booking.booking_number }}</strong></td>
+                        <td>{{ booking.customer_name }}</td>
+                        <td>{{ booking.package.name }}</td>
+                        <td>₹{{ booking.total_amount|floatformat:2 }}</td>
+                        <td>
+                            {% if booking.price_mismatch_flag %}
+                                <span class="badge bg-danger" title="Price Mismatch">P</span>
+                            {% endif %}
+                            {% if booking.excess_discount_flag %}
+                                <span class="badge bg-warning" title="Excess Discount">D</span>
+                            {% endif %}
+                            {% if booking.duplicate_booking_flag %}
+                                <span class="badge bg-info" title="Duplicate">Dup</span>
+                            {% endif %}
+                            {% if not booking.price_mismatch_flag and not booking.excess_discount_flag and not booking.duplicate_booking_flag %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ booking.created_at|date:"M d, Y" }}</td>
+                        <td>
+                            <a href="{% url 'bookings:detail' booking.pk %}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i> View
+                            </a>
+                            <a href="{% url 'bookings:validate' booking.pk %}" class="btn btn-sm btn-success">
+                                <i class="bi bi-check-circle"></i> Validate
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">No pending validations</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if page_obj.has_other_pages %}
+        <nav>
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+                {% endif %}
+                <li class="page-item active"><span class="page-link">{{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
+                {% if page_obj.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

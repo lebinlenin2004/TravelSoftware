@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - Travel Sales Management{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">{{ title }}</h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Package Name *</label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                                <div class="invalid-feedback d-block">{{ form.name.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Description</label>
+                            {{ form.description }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Destination *</label>
+                            {{ form.destination }}
+                            {% if form.destination.errors %}
+                                <div class="invalid-feedback d-block">{{ form.destination.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Duration (Days) *</label>
+                            {{ form.duration_days }}
+                            {% if form.duration_days.errors %}
+                                <div class="invalid-feedback d-block">{{ form.duration_days.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Base Price (₹) *</label>
+                            {{ form.base_price }}
+                            {% if form.base_price.errors %}
+                                <div class="invalid-feedback d-block">{{ form.base_price.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Seasonal Price (₹)</label>
+                            {{ form.seasonal_price }}
+                            <small class="text-muted">Optional - if not set, base price will be used</small>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Tax Percentage (GST) *</label>
+                            {{ form.tax_percentage }}
+                            {% if form.tax_percentage.errors %}
+                                <div class="invalid-feedback d-block">{{ form.tax_percentage.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Commission Percentage *</label>
+                            {{ form.commission_percentage }}
+                            {% if form.commission_percentage.errors %}
+                                <div class="invalid-feedback d-block">{{ form.commission_percentage.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Max Discount Percentage *</label>
+                            {{ form.max_discount_percentage }}
+                            {% if form.max_discount_percentage.errors %}
+                                <div class="invalid-feedback d-block">{{ form.max_discount_percentage.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <div class="form-check">
+                                {{ form.is_active }}
+                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                    Active
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'packages:list' %}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Save Package</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}Package Details - Travel Sales Management{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-box-seam"></i> Package Details</h2>
+    <a href="{% url 'packages:edit' package.pk %}" class="btn btn-primary">
+        <i class="bi bi-pencil"></i> Edit Package
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">{{ package.name }}</h4>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th width="200">Destination:</th>
+                        <td>{{ package.destination }}</td>
+                    </tr>
+                    <tr>
+                        <th>Duration:</th>
+                        <td>{{ package.duration_days }} days</td>
+                    </tr>
+                    <tr>
+                        <th>Description:</th>
+                        <td>{{ package.description|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Base Price:</th>
+                        <td>₹{{ package.base_price|floatformat:2 }}</td>
+                    </tr>
+                    <tr>
+                        <th>Seasonal Price:</th>
+                        <td>{% if package.seasonal_price %}₹{{ package.seasonal_price|floatformat:2 }}{% else %}-{% endif %}</td>
+                    </tr>
+                    <tr>
+                        <th>Current Price:</th>
+                        <td><strong>₹{{ package.get_current_price|floatformat:2 }}</strong></td>
+                    </tr>
+                    <tr>
+                        <th>Tax (GST):</th>
+                        <td>{{ package.tax_percentage }}%</td>
+                    </tr>
+                    <tr>
+                        <th>Commission:</th>
+                        <td>{{ package.commission_percentage }}%</td>
+                    </tr>
+                    <tr>
+                        <th>Max Discount:</th>
+                        <td>{{ package.max_discount_percentage }}%</td>
+                    </tr>
+                    <tr>
+                        <th>Status:</th>
+                        <td>
+                            <span class="badge bg-{% if package.is_active %}success{% else %}secondary{% endif %}">
+                                {% if package.is_active %}Active{% else %}Inactive{% endif %}
+                            </span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

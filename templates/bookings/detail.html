@@ -1,0 +1,213 @@
+{% extends 'base.html' %}
+
+{% block title %}Booking Details - Travel Sales Management{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-calendar-check"></i> Booking Details</h2>
+    <div>
+        {% if booking.status == 'pending' and user.can_validate_booking %}
+        <a href="{% url 'bookings:validate' booking.pk %}" class="btn btn-success">
+            <i class="bi bi-check-circle"></i> Validate
+        </a>
+        {% endif %}
+        {% if booking.status == 'approved' and not booking.payment %}
+        <a href="{% url 'payments:create' booking.pk %}" class="btn btn-primary">
+            <i class="bi bi-credit-card"></i> Record Payment
+        </a>
+        {% endif %}
+        {% if booking.status == 'approved' %}
+        <a href="{% url 'payments:generate_invoice' booking.pk %}" class="btn btn-info">
+            <i class="bi bi-file-earmark-pdf"></i> Generate Invoice
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">Booking Information</h5>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th width="200">Booking Number:</th>
+                        <td><strong>{{ booking.booking_number }}</strong></td>
+                    </tr>
+                    <tr>
+                        <th>Status:</th>
+                        <td>
+                            <span class="badge bg-{% if booking.status == 'approved' %}success{% elif booking.status == 'rejected' %}danger{% else %}warning{% endif %}">
+                                {{ booking.get_status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Package:</th>
+                        <td>{{ booking.package.name }} - {{ booking.package.destination }}</td>
+                    </tr>
+                    <tr>
+                        <th>Travel Date:</th>
+                        <td>{{ booking.travel_date|date:"F d, Y" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Number of Travelers:</th>
+                        <td>{{ booking.number_of_travelers }}</td>
+                    </tr>
+                    <tr>
+                        <th>Created By:</th>
+                        <td>{{ booking.created_by.get_full_name|default:booking.created_by.username }}</td>
+                    </tr>
+                    <tr>
+                        <th>Created At:</th>
+                        <td>{{ booking.created_at|date:"F d, Y H:i" }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">Customer Details</h5>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th width="200">Name:</th>
+                        <td>{{ booking.customer_name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Email:</th>
+                        <td>{{ booking.customer_email }}</td>
+                    </tr>
+                    <tr>
+                        <th>Phone:</th>
+                        <td>{{ booking.customer_phone }}</td>
+                    </tr>
+                    <tr>
+                        <th>Address:</th>
+                        <td>{{ booking.customer_address|default:"-" }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">Pricing Details</h5>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th width="200">Package Price:</th>
+                        <td>₹{{ booking.package_price|floatformat:2 }}</td>
+                    </tr>
+                    <tr>
+                        <th>Discount ({{ booking.discount_percentage }}%):</th>
+                        <td>-₹{{ booking.discount_amount|floatformat:2 }}</td>
+                    </tr>
+                    <tr>
+                        <th>Subtotal:</th>
+                        <td>₹{{ booking.subtotal|floatformat:2 }}</td>
+                    </tr>
+                    <tr>
+                        <th>GST ({{ booking.package.tax_percentage }}%):</th>
+                        <td>₹{{ booking.tax_amount|floatformat:2 }}</td>
+                    </tr>
+                    <tr class="table-primary">
+                        <th><strong>Total Amount:</strong></th>
+                        <td><strong>₹{{ booking.total_amount|floatformat:2 }}</strong></td>
+                    </tr>
+                    <tr>
+                        <th>Commission:</th>
+                        <td>₹{{ booking.commission_amount|floatformat:2 }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        {% if booking.price_mismatch_flag or booking.excess_discount_flag or booking.duplicate_booking_flag %}
+        <div class="card mb-3 border-warning">
+            <div class="card-header bg-warning">
+                <h5 class="mb-0">⚠️ Validation Flags</h5>
+            </div>
+            <div class="card-body">
+                <ul>
+                    {% if booking.price_mismatch_flag %}
+                    <li class="text-danger"><strong>Price Mismatch:</strong> Package price does not match expected price</li>
+                    {% endif %}
+                    {% if booking.excess_discount_flag %}
+                    <li class="text-warning"><strong>Excess Discount:</strong> Discount exceeds maximum allowed</li>
+                    {% endif %}
+                    {% if booking.duplicate_booking_flag %}
+                    <li class="text-info"><strong>Duplicate Booking:</strong> Similar booking found for same customer/package/date</li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if booking.status != 'pending' %}
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">Validation Details</h5>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th width="200">Validated By:</th>
+                        <td>{{ booking.validated_by.get_full_name|default:booking.validated_by.username }}</td>
+                    </tr>
+                    <tr>
+                        <th>Validated At:</th>
+                        <td>{{ booking.validated_at|date:"F d, Y H:i" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Validation Notes:</th>
+                        <td>{{ booking.validation_notes|default:"-" }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="col-md-4">
+        {% if booking.payment %}
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">Payment Status</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Status:</strong> 
+                    <span class="badge bg-{% if booking.payment.payment_status == 'paid' %}success{% elif booking.payment.payment_status == 'partial' %}warning{% else %}secondary{% endif %}">
+                        {{ booking.payment.get_payment_status_display }}
+                    </span>
+                </p>
+                <p><strong>Amount Paid:</strong> ₹{{ booking.payment.amount_paid|floatformat:2 }}</p>
+                <p><strong>Balance:</strong> ₹{{ booking.payment.get_balance|floatformat:2 }}</p>
+                <a href="{% url 'payments:detail' booking.payment.pk %}" class="btn btn-sm btn-outline-primary w-100">View Payment</a>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if booking.invoice %}
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">Invoice</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Invoice #:</strong> {{ booking.invoice.invoice_number }}</p>
+                <p><strong>Date:</strong> {{ booking.invoice.invoice_date|date:"M d, Y" }}</p>
+                <a href="{% url 'payments:view_invoice' booking.invoice.pk %}" class="btn btn-sm btn-outline-primary w-100" target="_blank">
+                    <i class="bi bi-file-earmark-pdf"></i> View Invoice
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
